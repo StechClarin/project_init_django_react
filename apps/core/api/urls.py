@@ -1,0 +1,1 @@
+# Fichier généré pour core

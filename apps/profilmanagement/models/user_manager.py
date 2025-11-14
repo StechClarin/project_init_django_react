@@ -1,0 +1,36 @@
+# apps/profilmanagement/models/user_manager.py
+from django.contrib.auth.models import BaseUserManager
+
+class UserManager(BaseUserManager):
+    """
+    Manager personnalisé pour notre modèle User.
+    """
+    def create_user(self, username, email, password=None, **extra_fields):
+        """
+        Crée et sauvegarde un utilisateur avec un email et un mot de passe.
+        """
+        if not username:
+            raise ValueError("Le nom d'utilisateur est obligatoire")
+        if not email:
+            raise ValueError("L'email est obligatoire")
+        
+        email = self.normalize_email(email)
+        user = self.model(username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, email, password=None, **extra_fields):
+        """
+        Crée et sauvegarde un super-utilisateur.
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Le super-utilisateur doit avoir is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Le super-utilisateur doit avoir is_superuser=True.')
+
+        return self.create_user(username, email, password, **extra_fields)
