@@ -2,70 +2,93 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.utils.module_loading import import_string
-from django.apps import apps
 from django.http import Http404
+from django.utils.module_loading import import_module
+from django.apps import apps
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 class RouterView(APIView):
     """
-    Le Front Controller (Aiguilleur) de notre API (CUD Uniquement).
-    Analyse l'URL (/api/Model/method/) et délègue au bon Controller.
-    Il n'accepte que les requêtes POST.
+    Le Front Controller (Aiguilleur) v2.
+    Dynamique, Sécurisé et insensible à la casse des fichiers.
     """
     
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def _get_controller_instance(self, model_name):
-        controller_name = f"{model_name.capitalize()}Controller"
-        for app_config in apps.get_app_configs():
-            if app_config.name.startswith('apps.'):
-                controller_path = f"{app_config.name}.api.controllers.{model_name.lower()}_controller.{controller_name}"
-                try:
-                    controller_class = import_string(controller_path)
-                    return controller_class()
-                except ImportError:
-                    continue
-        raise Http404(f"Contrôleur '{controller_name}' non trouvé.")
-
-    def _dispatch_request(self, request, model_name, method_name, pk=None):
-        try:
-            controller = self._get_controller_instance(model_name)
-            
-            # --- GESTION SPÉCIALE POUR L'AUTH ---
-            if model_name.lower() == 'auth':
-                # On ne vérifie pas les permissions pour le AuthController
-                pass
-            else:
-                # Pour tous les autres, on vérifie les permissions
-                self.check_permissions(request)
-
-            if not hasattr(controller, method_name):
-                return Response(
-                    {"detail": f"Méthode '{method_name}' non autorisée sur '{model_name}'."},
-                    status=status.HTTP_405_METHOD_NOT_ALLOWED
-                )
-                
-            method_to_call = getattr(controller, method_name)
-
-            if pk:
-                return method_to_call(request, pk=pk)
-            else:
-                return method_to_call(request)
-
-        except Http404 as e:
-            return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            if hasattr(e, 'detail'):
-                return Response({"detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    # --- MÉTHODE HTTP (POST UNIQUEMENT) ---
-
     def post(self, request, model_name, method_name, pk=None):
-        """ Gère les écritures (save, delete, etc.) """
-        # La méthode 'get' est supprimée. 
-        # APIView renverra 405 Method Not Allowed si quelqu'un essaie un GET.
-        return self._dispatch_request(request, model_name, method_name, pk)
+        # 1. Trouver la classe du contrôleur
+        try:
+            controller_class = self.get_controller_class(model_name)
+        except (ImportError, AttributeError, LookupError):
+            # Si on ne trouve pas la classe ou le module, c'est une 404.
+            # Mais on le fait AVANT d'instancier pour ne pas masquer les bugs internes.
+            raise Http404(f"Contrôleur pour '{model_name}' introuvable.")
+
+        # 2. Instancier et Vérifier la méthode
+        controller_instance = controller_class()
+        
+        if not hasattr(controller_instance, method_name):
+            return Response(
+                {"detail": f"Méthode '{method_name}' non trouvée dans '{model_name}'."}, 
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+
+        method = getattr(controller_instance, method_name)
+
+        # 3. Vérifier les permissions du contrôleur enfant
+        # (Le BaseController a ses propres checks, mais on force le check ici aussi)
+        self.check_permissions(request)
+        controller_instance.check_permissions(request)
+
+        # 4. Exécuter
+        # (Si ça plante ici, c'est une erreur 500 normale, on ne l'attrape pas)
+        if pk:
+            return method(request, pk)
+        return method(request)
+
+    def get_controller_class(self, model_name):
+        """
+        Trouve la classe du contrôleur.
+        Gère la casse : Fichier = minuscule, Classe = Majuscule.
+        """
+        # Cas spécial pour l'Auth (qui n'est pas un modèle Django)
+        if model_name.lower() == 'auth':
+            # On redirige vers l'app profilmanagement manuellement ou on lève une erreur
+            # car l'Auth doit passer par les routes spécifiques dans urls.py
+            raise Http404("L'authentification ne passe pas par le routeur générique.")
+
+        app_label = self.get_app_name_from_model(model_name)
+        if not app_label:
+            raise LookupError(f"Aucune application ne contient le modèle '{model_name}'")
+        
+        # Construction du chemin :
+        # app: 'profilmanagement'
+        # fichier: 'role_controller' (minuscule)
+        # classe: 'RoleController' (Capitalisé)
+        module_path = f'apps.{app_label}.api.controllers.{model_name.lower()}_controller'
+        
+        # Importation du module
+        module = import_module(module_path)
+        
+        # Récupération de la classe
+        class_name = f'{model_name.capitalize()}Controller'
+        return getattr(module, class_name)
+
+    def get_app_name_from_model(self, model_name):
+        """
+        Scanne les apps pour trouver où habite le modèle.
+        """
+        for app_config in apps.get_app_configs():
+            # On ne scanne que nos apps locales pour gagner du temps
+            if not app_config.name.startswith('apps.'):
+                continue
+                
+            try:
+                # C'est la méthode officielle Django pour voir si un modèle existe dans une app
+                app_config.get_model(model_name)
+                return app_config.label # Retourne 'profilmanagement' par exemple
+            except LookupError:
+                continue
+        return None

@@ -6,7 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'projet_init.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     # import sys
     # sys.path.append(os.path.join(os.path.dirname(__file__), 'apps'))
     try:

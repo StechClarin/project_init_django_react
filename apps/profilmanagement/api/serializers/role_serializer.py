@@ -1,5 +1,7 @@
 
 from apps.core.api.serializers.BaseSerializer import BaseSerializer
+
+
 from ...models import Role
 
 class RoleSerializer(BaseSerializer):
