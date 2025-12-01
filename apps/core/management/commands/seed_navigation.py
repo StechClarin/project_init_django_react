@@ -27,8 +27,7 @@ MODULE_STRUCTURE = [
             },
         ]
     },
-    # --- AJOUTE TES AUTRES MODULES ICI ---                "title": "Role",
-
+    # --- AJOUTE TES AUTRES MODULES ICI ---
 ]
 
 class Command(BaseCommand):

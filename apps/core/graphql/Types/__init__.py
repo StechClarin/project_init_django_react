@@ -1,2 +1,7 @@
+from .module_type import ModuleType
+from .page_type import PageType
 
-from .role_type import RoleType
+__all__ = [
+    'ModuleType',
+    'PageType',
+]

@@ -36,6 +36,39 @@ class BaseController(APIView):
 
     # --- MÉTHODES CUD (Orchestration) ---
 
+    # --- MÉTHODES CUD (Orchestration) ---
+
+    def list(self, request, *args, **kwargs):
+        """
+        Expose la méthode list du service (READ) avec Pagination.
+        """
+        # 1. Filtres (Optionnel: on pourrait parser request.query_params)
+        filters = {} 
+        
+        # 2. Appel Service
+        queryset = self.service.list(filters)
+        
+        # 3. Pagination
+        from rest_framework.pagination import PageNumberPagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 10 # Défaut, peut être surchargé via settings
+        
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        
+        if page is not None:
+            serializer = self.serializer(page, many=True)
+            # On conserve notre structure de réponse standard "Envelope"
+            return self.success_response({
+                "count": paginator.page.paginator.count,
+                "next": paginator.get_next_link(),
+                "previous": paginator.get_previous_link(),
+                "results": serializer.data
+            }, "Liste récupérée avec succès (paginée).", status.HTTP_200_OK)
+
+        # Fallback si pagination désactivée (peu probable ici)
+        data = self.serializer(queryset, many=True).data
+        return self.success_response(data, "Liste récupérée avec succès.", status.HTTP_200_OK)
+
     def save(self, request, pk=None, *args, **kwargs):
         """
         Logique unifiée pour Création (POST /) et Modification (POST /id/).

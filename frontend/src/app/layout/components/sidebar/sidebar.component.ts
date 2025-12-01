@@ -1,6 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Apollo } from 'apollo-angular';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { GET_SIDEBAR_MODULES } from './sidebar.queries';
+
+// Interface locale pour typer les données
+interface SidebarPage {
+  title: string;
+  link: string;
+  icon: string;
+}
+
+interface SidebarModule {
+  name: string;
+  pages: SidebarPage[];
+}
 
 @Component({
   selector: 'app-sidebar',
@@ -15,28 +31,33 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         </span>
       </div>
 
-      <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+      <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
         
-        <a routerLink="/dashboard" 
-           routerLinkActive="bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
-           class="flex items-center px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors group">
-          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-          <span class="font-medium">Dashboard</span>
-        </a>
+        <div *ngFor="let module of modules$ | async">
+          
+          <div class="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            {{ module.name }}
+          </div>
 
-        <a routerLink="/users" 
-           routerLinkActive="bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
-           class="flex items-center px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors group">
-          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-          <span class="font-medium">Utilisateurs</span>
-        </a>
+          <div class="space-y-1">
+            <a *ngFor="let page of module.pages"
+               [routerLink]="page.link" 
+               routerLinkActive="bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
+               class="flex items-center px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors group cursor-pointer">
+              
+              <span class="mr-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+              </span>
 
-        <a routerLink="/products" 
-           routerLinkActive="bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
-           class="flex items-center px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors group">
-          <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-          <span class="font-medium">Produits</span>
-        </a>
+              <span class="font-medium">{{ page.title }}</span>
+            </a>
+          </div>
+
+        </div>
+
+        <div *ngIf="!(modules$ | async)" class="text-center text-slate-500 text-sm mt-10">
+          Chargement du menu...
+        </div>
 
       </nav>
 
@@ -46,4 +67,18 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     </aside>
   `
 })
-export class SidebarComponent {}
+export class SidebarComponent implements OnInit {
+  private apollo = inject(Apollo);
+  
+  // Observable qui contient la liste des modules
+  modules$!: Observable<SidebarModule[]>;
+
+  ngOnInit() {
+    // On récupère les données via GraphQL
+    this.modules$ = this.apollo.watchQuery<any>({
+      query: GET_SIDEBAR_MODULES
+    }).valueChanges.pipe(
+      map(result => result.data.modules)
+    );
+  }
+}

@@ -5,11 +5,7 @@
   "projects": {
     "frontend": {
       "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
-      },
+      "schematics": {},
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -23,8 +19,7 @@
             "polyfills": [
               "zone.js"
             ],
-            "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
+            "tsConfig": "tsconfig.json",
             "assets": [
               {
                 "glob": "**/*",
@@ -38,12 +33,6 @@
           },
           "configurations": {
             "production": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -89,7 +78,6 @@
               "zone.js/testing"
             ],
             "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
@@ -106,6 +94,6 @@
     }
   },
   "cli": {
-    "analytics": "08745809-1578-498a-86de-63836695b8ee"
+    "analytics": "59d6a21d-48f3-433c-93e7-8e117a92e29c"
   }
 }

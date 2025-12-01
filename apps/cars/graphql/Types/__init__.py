@@ -1,2 +1,6 @@
+# Corrige l'import ici :
+from .cars_type import CarType  
 
-from .cars_type import CarsType
+__all__ = [
+    'CarType', 
+]

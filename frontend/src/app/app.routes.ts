@@ -1,46 +1,42 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './features/auth/login/login.component';
-import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
+
+// ✅ 1. On utilise les ALIAS pour importer les composants structurels
+import { LoginComponent } from '@features/auth/login/login.component';
+import { MainLayoutComponent } from '@layout/main-layout/main-layout.component';
+// import { authGuard } from '@core/guards/auth.guard'; // (Sera décommenté plus tard)
 
 export const routes: Routes = [
-  // 1. Route Publique (Login)
-  // C'est la seule page accessible sans le layout principal
-  { 
-    path: 'login', 
-    component: LoginComponent 
+
+  // --- ZONE PUBLIQUE ---
+  {
+    path: 'login',
+    component: LoginComponent
   },
 
-  // 2. Routes Protégées (Dans le Layout Admin)
-  // Tout ce qui est ici aura la Sidebar et le Header
+  // --- ZONE PROTÉGÉE (Layout Admin) ---
   {
     path: '',
     component: MainLayoutComponent,
-    // canActivate: [authGuard], // (À décommenter plus tard quand le guard sera prêt)
+    // canActivate: [authGuard], // Sécurité à venir
     children: [
-      // Redirection par défaut vers le dashboard
+      // Redirection par défaut
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      
-      // Le Dashboard (Lazy loaded)
-      { 
-        path: 'dashboard', 
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) 
+
+      // 1. Dashboard (Lazy Loading de COMPOSANT via alias)
+      {
+        path: 'dashboard',
+        loadComponent: () => import('@features/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
-      
-      // Module Produits (Lazy loaded)
-    //   { 
-    //     path: 'products', 
-    //     loadChildren: () => import('./features/products/products.routes').then(m => m.PRODUCT_ROUTES) 
-    //   },
-      
-      // Module Utilisateurs/Profil (Lazy loaded)
-    //   { 
-    //     path: 'users', 
-    //     loadChildren: () => import('./features/profilmanagement/profil.routes').then(m => m.PROFIL_ROUTES) 
-    //   }
+
+      // 2. Module Products (Lazy Loading de ROUTES via alias)
+      {
+        path: 'products',
+        loadChildren: () => import('@features/products/products.routes').then(m => m.PRODUCTS_ROUTES)
+      },
+
     ]
   },
 
-  // 3. Fallback (404)
-  // Si l'URL n'existe pas, on renvoie vers la racine (qui redirige vers dashboard ou login)
+  // --- FALLBACK (404) ---
   { path: '**', redirectTo: '' }
 ];

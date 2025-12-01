@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'apps.core.apps.CoreConfig',
     'apps.profilmanagement.apps.ProfilmanagementConfig',    
     'apps.cars.apps.CarsConfig',
+    'apps.shop.apps.ShopConfig',
 
     'rest_framework',
     'rest_framework_simplejwt',
@@ -43,11 +44,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware', 
+    'corsheaders.middleware.CorsMiddleware', # <--- AJOUTE CECI ICI (Très important)
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.core.middleware.JWTMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -75,6 +77,11 @@ DATABASES = {
     'default': env.db()
 }
 CORS_ALLOW_ALL_ORIGINS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+]
 AUTH_PASSWORD_VALIDATORS = [
     { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
     { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
@@ -102,5 +109,5 @@ AUTHENTICATION_BACKENDS = [
 
 # --- CONFIGURATION GRAPHENE ---
 GRAPHENE = {
-    "SCHEMA": "config.schema.schema" # On pointera vers notre schéma principal
+    "SCHEMA": "apps.core.graphql.schema.schema" 
 }

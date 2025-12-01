@@ -1,5 +1,5 @@
-from apps.core.api.controllers.BaseController import BaseController
-from ..serializers import PermissionSerializer
+from .BaseController import BaseController
+from ..serializers.permission_serializer import PermissionSerializer
 from ...services.permission_service import PermissionService
 
 class PermissionController(BaseController):

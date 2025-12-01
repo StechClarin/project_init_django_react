@@ -8,6 +8,7 @@ class Role(models.Model):
         Group,
         blank=True,
         verbose_name="Groupes de permission",
+        related_name="roles"
     )
 
     class Meta:

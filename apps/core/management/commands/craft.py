@@ -174,15 +174,6 @@ from ..models import {model_name}
 
 class {model_name}Service(BaseService):
     model = {model_name}
-
-    def create(self, validated_data):
-        return super().create(validated_data)
-
-    def update(self, instance, validated_data):
-        return super().update(instance, validated_data)
-
-    def delete(self, instance):
-        return super().delete(instance)
 """
 
     def _tpl_gql_type(self, model_name: str) -> str:

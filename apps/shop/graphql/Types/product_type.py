@@ -1,8 +1,8 @@
 import graphene
 from graphene_django.types import DjangoObjectType
-from ...models import Role
+from ...models import Product
 
-class RoleType(DjangoObjectType):
+class ProductType(DjangoObjectType):
     class Meta:
-        model = Role
+        model = Product
         fields = "__all__"
