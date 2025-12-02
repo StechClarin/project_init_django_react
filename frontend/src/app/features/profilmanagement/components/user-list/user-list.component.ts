@@ -32,15 +32,16 @@ export class UserListComponent extends BaseListComponent<User> implements OnInit
   }
 
   override ngOnInit(): void {
-    // 1. Le parent initialise 'this.filterForm' via 'initFilterForm'
-    super.ngOnInit();
+    // 1. On initialise le formulaire manuellement (sans lancer la requête tout de suite)
+    this.filterForm = this.initFilterForm();
 
-    // 2. Maintenant 'this.filterForm' existe, on peut le patcher
+    // 2. On récupère les filtres du store
     this.store.select(selectUserFilters).pipe(take(1)).subscribe(filters => {
       if (filters && Object.keys(filters).length > 0) {
         this.filterForm.patchValue(filters);
-        this.refresh();
       }
+      // 3. On lance la requête UNE SEULE FOIS avec les bonnes valeurs
+      this.initQuery();
     });
   }
 
