@@ -6,8 +6,8 @@ export interface User {
   lastName?: string;
   isActive: boolean;
   dateJoined: string;
-  role?: {
-    id: string;
+  roles?: {
+    id?: string;
     name: string;
-  };
+  }[];
 }
