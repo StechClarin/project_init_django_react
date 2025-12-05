@@ -1,14 +1,27 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Apollo } from 'apollo-angular';
+import { Observable, Subject, combineLatest } from 'rxjs';
+import { map, startWith, takeUntil } from 'rxjs/operators';
 
 // ✅ On utilise l'alias @core pour l'import propre
 import { AuthService } from '@core/services/auth.service';
+import { GET_SIDEBAR_MODULES } from '../sidebar/sidebar.queries';
+
+interface Page {
+  id: string;
+  title: string;
+  link: string;
+  icon: string;
+  moduleName?: string; // Pour afficher le contexte
+}
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <header class="fixed top-0 right-0 left-72 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between px-8 z-40 transition-all duration-300">
       
@@ -29,10 +42,43 @@ import { AuthService } from '@core/services/auth.service';
       <!-- Right Section: Actions & Profile -->
       <div class="flex items-center gap-6">
         
-        <!-- Search Bar (Optional, visual only for now) -->
-        <div class="hidden md:flex items-center relative">
-          <svg class="w-4 h-4 absolute left-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          <input type="text" placeholder="Recherche rapide..." class="pl-9 pr-4 py-2 bg-gray-100/50 border-none rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all w-64">
+        <!-- Search Bar -->
+        <div class="hidden md:flex items-center relative group">
+          <svg class="w-4 h-4 absolute left-3 text-gray-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input 
+            [formControl]="searchControl"
+            type="text" 
+            placeholder="Recherche rapide..." 
+            class="pl-9 pr-4 py-2 bg-gray-100/50 border-none rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all w-64"
+            (blur)="onBlur()">
+          
+          <!-- Search Results Dropdown -->
+          <div *ngIf="showResults && (filteredPages$ | async) as results" 
+               class="absolute top-full left-0 w-80 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+            
+            <div *ngIf="results.length > 0; else noResults">
+              <div class="py-2">
+                <button *ngFor="let page of results" 
+                        (click)="navigateTo(page.link)"
+                        class="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-3 group/item transition-colors">
+                  <div class="h-8 w-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover/item:bg-indigo-100 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-900">{{ page.title }}</p>
+                    <p class="text-xs text-gray-500">{{ page.moduleName }}</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <ng-template #noResults>
+              <div class="p-4 text-center text-gray-500 text-sm">
+                Aucun résultat trouvé.
+              </div>
+            </ng-template>
+
+          </div>
         </div>
 
         <div class="h-8 w-px bg-gray-200"></div>
@@ -80,11 +126,66 @@ import { AuthService } from '@core/services/auth.service';
     </header>
   `
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
+  private apollo = inject(Apollo);
+  private router = inject(Router);
 
-  // Pas besoin d'injecter Router ici, car le AuthService gère la redirection dans logout()
-  // Mais on peut le garder si on veut faire une redirection spécifique.
+  searchControl = new FormControl('');
+  filteredPages$!: Observable<Page[]>;
+  showResults = false;
+  private destroy$ = new Subject<void>();
+
+  ngOnInit() {
+    // 1. Récupérer toutes les pages (aplaties)
+    const allPages$ = this.apollo.watchQuery<any>({
+      query: GET_SIDEBAR_MODULES
+    }).valueChanges.pipe(
+      map(result => {
+        const modules = result.data.modules;
+        const pages: Page[] = [];
+        modules.forEach((mod: any) => {
+          if (mod.pages) {
+            mod.pages.forEach((p: any) => {
+              pages.push({ ...p, moduleName: mod.name });
+            });
+          }
+        });
+        return pages;
+      })
+    );
+
+    // 2. Filtrer en fonction de la saisie
+    this.filteredPages$ = combineLatest([
+      allPages$,
+      this.searchControl.valueChanges.pipe(startWith(''))
+    ]).pipe(
+      map(([pages, searchTerm]) => {
+        const term = (searchTerm || '').toLowerCase();
+        this.showResults = term.length > 0; // Afficher les résultats seulement si on tape quelque chose
+        if (!term) return [];
+        return pages.filter(p => p.title.toLowerCase().includes(term));
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  navigateTo(link: string) {
+    this.showResults = false;
+    this.searchControl.setValue(''); // Reset search
+    this.router.navigateByUrl(link);
+  }
+
+  onBlur() {
+    // Petit délai pour permettre le clic sur le résultat avant de fermer
+    setTimeout(() => {
+      this.showResults = false;
+    }, 200);
+  }
 
   logout() {
     this.authService.logout();
