@@ -126,6 +126,86 @@ export class UserListComponent extends BaseListComponent<User> implements OnInit
     this.toastService.success('Utilisateur enregistré avec succès.');
   }
 
+  // === Import / Export (DRY Pattern) ===
+
+  /**
+   * Méthode générique pour gérer les opérations de fichiers (import/export)
+   * Respecte le principe DRY en évitant la duplication de code
+   */
+  private handleFileOperation(
+    operation: 'import' | 'export',
+    serviceMethod: () => Observable<any>,
+    successMessage: string
+  ) {
+    this.isLoading.set(true);
+
+    serviceMethod().subscribe({
+      next: (response) => {
+        if (operation === 'export') {
+          // Pour l'export, on télécharge le fichier
+          this.downloadFile(response);
+        } else {
+          // Pour l'import, on rafraîchit la liste
+          this.refresh();
+        }
+        this.toastService.success(successMessage);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error(`Erreur lors de l'${operation}`, err);
+        this.toastService.error(`Une erreur est survenue lors de l'${operation}.`);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  /**
+   * Gère l'import d'utilisateurs depuis un fichier CSV/Excel
+   */
+  onImport() {
+    // Créer un input file invisible
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.xlsx,.xls';
+
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      this.handleFileOperation(
+        'import',
+        () => this.service.import(file),
+        `${file.name} importé avec succès.`
+      );
+    };
+
+    input.click();
+  }
+
+  /**
+   * Gère l'export des utilisateurs vers un fichier CSV/Excel
+   */
+  onExport() {
+    this.handleFileOperation(
+      'export',
+      () => this.service.export('excel'), // ou 'csv' selon la préférence
+      'Export réussi. Téléchargement en cours...'
+    );
+  }
+
+  /**
+   * Télécharge un fichier blob
+   */
+  private downloadFile(blob: Blob) {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `users_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+
   roles$!: Observable<any[]>;
 
   initFilterForm(): FormGroup {

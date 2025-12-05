@@ -135,3 +135,59 @@ class BaseController(APIView):
         # On renvoie l'objet mis à jour
         data = self.serializer(result).data
         return self.success_response(data, "Statut modifié avec succès.", status.HTTP_200_OK)
+
+    def export_data(self, request, *args, **kwargs):
+        """
+        Export des données au format CSV ou Excel
+        GET /api/{endpoint}/export/?format=csv|excel
+        """
+        format_type = request.GET.get('format', 'excel')
+        
+        if format_type not in ['csv', 'excel']:
+            return Response(
+                {"detail": "Format invalide. Utilisez 'csv' ou 'excel'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            file_response = self.service.export_data(format_type)
+            return file_response
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def import_data(self, request, *args, **kwargs):
+        """
+        Import des données depuis un fichier CSV ou Excel
+        POST /api/{endpoint}/import/
+        """
+        if 'file' not in request.FILES:
+            return Response(
+                {"detail": "Aucun fichier fourni. Utilisez la clé 'file'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        file_obj = request.FILES['file']
+        
+        # Vérification de l'extension
+        allowed_extensions = ['.csv', '.xlsx', '.xls']
+        file_extension = '.' + file_obj.name.split('.')[-1].lower()
+        
+        if file_extension not in allowed_extensions:
+            return Response(
+                {"detail": f"Extension non autorisée. Utilisez: {', '.join(allowed_extensions)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            result = self.service.import_data(file_obj, atomic=False)
+            
+            if result['status'] == 'error':
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+            
+            return self.success_response(
+                result,
+                f"Import terminé. {result['imported']} élément(s) importé(s).",
+                status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -48,6 +48,38 @@ class RouterView(APIView):
             return method(request, pk)
         return method(request)
 
+    def get(self, request, model_name, method_name, pk=None):
+        """
+        Gère les requêtes GET (principalement pour export_data)
+        Utilise la même logique que POST pour la cohérence
+        """
+        # 1. Trouver la classe du contrôleur
+        try:
+            controller_class = self.get_controller_class(model_name)
+        except (ImportError, AttributeError, LookupError):
+            raise Http404(f"Contrôleur pour '{model_name}' introuvable.")
+
+        # 2. Instancier et Vérifier la méthode
+        controller_instance = controller_class()
+        
+        if not hasattr(controller_instance, method_name):
+            return Response(
+                {"detail": f"Méthode '{method_name}' non trouvée dans '{model_name}'."}, 
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+
+        method = getattr(controller_instance, method_name)
+
+        # 3. Vérifier les permissions
+        self.check_permissions(request)
+        controller_instance.check_permissions(request)
+
+        # 4. Exécuter
+        if pk:
+            return method(request, pk)
+        return method(request)
+
+
     def get_controller_class(self, model_name):
         """
         Trouve la classe du contrôleur.

@@ -42,4 +42,26 @@ export abstract class BaseService {
     status(id: number | string): Observable<any> {
         return this.http.post(`${this.apiUrl}/status/${id}/`, {});
     }
+
+    /**
+     * Generic Import
+     * POST /api/{endpoint}/import_data/
+     * Uploads a file (CSV/Excel) to import data
+     */
+    import(file: File): Observable<any> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.http.post(`${this.apiUrl}/import_data/`, formData);
+    }
+
+    /**
+     * Generic Export
+     * GET /api/{endpoint}/export_data/?format={format}
+     * Downloads data as CSV or Excel file
+     */
+    export(format: 'csv' | 'excel' = 'excel'): Observable<Blob> {
+        return this.http.get(`${this.apiUrl}/export_data/?format=${format}`, {
+            responseType: 'blob'
+        });
+    }
 }
