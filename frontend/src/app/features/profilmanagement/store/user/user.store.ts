@@ -2,6 +2,7 @@ import { createFilterStore } from '../../../../core/store/filter.factory';
 
 export interface UserFilters {
     username?: string;
+    email?: string;
     role?: string;
 }
 

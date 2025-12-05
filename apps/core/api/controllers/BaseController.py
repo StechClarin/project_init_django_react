@@ -124,3 +124,14 @@ class BaseController(APIView):
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             
         return self.success_response(result, "Suppression effectuée avec succès.", status.HTTP_200_OK)
+
+    def status(self, request, pk, *args, **kwargs):
+        """ Logique pour le changement de statut """
+        try:
+            result = self.service.status(pk)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # On renvoie l'objet mis à jour
+        data = self.serializer(result).data
+        return self.success_response(data, "Statut modifié avec succès.", status.HTTP_200_OK)

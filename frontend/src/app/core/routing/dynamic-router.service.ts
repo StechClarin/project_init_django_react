@@ -14,7 +14,7 @@ const GET_ALL_PAGES = gql`
       name
       pages {
         title
-        icon
+        
         link
       }
     }

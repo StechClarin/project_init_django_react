@@ -10,41 +10,70 @@ import { AuthService } from '@core/services/auth.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <header class="fixed top-0 right-0 left-64 h-16 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-6 z-40 transition-all duration-300">
+    <header class="fixed top-0 right-0 left-72 h-20 bg-white/80 backdrop-blur-md border-b border-gray-200/50 flex items-center justify-between px-8 z-40 transition-all duration-300">
       
-      <div class="flex items-center">
-        <h1 class="text-xl font-semibold text-gray-800 tracking-tight">
-          Administration
-        </h1>
-      </div>
-
-      <div class="flex items-center space-x-4">
-        
-        <button class="p-2 text-gray-400 hover:text-indigo-600 transition-colors relative">
-          <span class="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-        </button>
-
-        <div class="h-8 w-px bg-gray-200 mx-2"></div>
-
-        <div class="flex items-center gap-3 cursor-pointer group">
-          <div class="text-right hidden sm:block">
-            <p class="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
-              EtherNanos
-            </p>
-            <p class="text-xs text-gray-500">Super Admin</p>
-          </div>
-
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md border-2 border-white">
-            E
+      <!-- Left Section: Breadcrumbs / Title -->
+      <div class="flex items-center gap-4">
+        <div class="flex flex-col">
+          <h1 class="text-2xl font-bold text-gray-900 tracking-tight font-sans">
+            Administration
+          </h1>
+          <div class="flex items-center text-xs font-medium text-gray-500 space-x-2 mt-0.5">
+            <span>Dashboard</span>
+            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            <span class="text-indigo-600">Vue d'ensemble</span>
           </div>
         </div>
+      </div>
 
+      <!-- Right Section: Actions & Profile -->
+      <div class="flex items-center gap-6">
+        
+        <!-- Search Bar (Optional, visual only for now) -->
+        <div class="hidden md:flex items-center relative">
+          <svg class="w-4 h-4 absolute left-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" placeholder="Recherche rapide..." class="pl-9 pr-4 py-2 bg-gray-100/50 border-none rounded-xl text-sm text-gray-600 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all w-64">
+        </div>
+
+        <div class="h-8 w-px bg-gray-200"></div>
+
+        <!-- Notifications -->
+        <button class="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all relative group">
+          <span class="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse"></span>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          
+          <!-- Tooltip -->
+          <div class="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
+            <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Notifications</p>
+            <div class="text-sm text-gray-700 py-1">3 nouveaux messages</div>
+          </div>
+        </button>
+
+        <!-- Profile Dropdown Trigger -->
+        <div class="flex items-center gap-3 cursor-pointer group p-1.5 pr-3 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200/50">
+          <div class="relative">
+             <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-white group-hover:ring-indigo-100 transition-all">
+               <img src="https://ui-avatars.com/api/?name=Ether+Nanos&background=6366f1&color=fff" alt="Profile" class="rounded-full h-full w-full object-cover">
+             </div>
+             <div class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></div>
+          </div>
+          
+          <div class="hidden sm:block text-left">
+            <p class="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+              EtherNanos
+            </p>
+            <p class="text-xs text-gray-500 font-medium">Super Admin</p>
+          </div>
+
+          <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+
+        <!-- Logout Button -->
         <button 
           (click)="logout()" 
-          class="ml-2 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all" 
+          class="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100" 
           title="Se déconnecter">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
         </button>
       </div>
 
@@ -53,7 +82,7 @@ import { AuthService } from '@core/services/auth.service';
 })
 export class HeaderComponent {
   private authService = inject(AuthService);
-  
+
   // Pas besoin d'injecter Router ici, car le AuthService gère la redirection dans logout()
   // Mais on peut le garder si on veut faire une redirection spécifique.
 

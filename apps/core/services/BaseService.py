@@ -249,3 +249,33 @@ class BaseService:
             "imported": created_count, 
             "errors": errors
         }
+
+    # ==========================================================================
+    # 4. GESTION DES STATUTS (Activate/Deactivate)
+    # ==========================================================================
+
+    def status(self, pk):
+        """
+        Change le statut (is_active) d'un objet.
+        Gère le hook before_status.
+        """
+        instance = self.get_by_id(pk)
+        
+        # Hook avant changement (Validation ou Logique métier)
+        self.before_status(instance)
+        
+        # Bascule du statut (si le champ existe)
+        if hasattr(instance, 'is_active'):
+            instance.is_active = not instance.is_active
+            instance.save()
+        else:
+            raise ValidationError(f"Le modèle {self.model.__name__} n'a pas de champ 'is_active'.")
+            
+        return instance
+
+    def before_status(self, instance):
+        """
+        [HOOK] À surcharger pour vérifier des règles avant changement de statut.
+        Ex: Impossible de désactiver un admin principal.
+        """
+        pass
