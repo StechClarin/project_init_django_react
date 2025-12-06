@@ -279,3 +279,37 @@ class BaseService:
         Ex: Impossible de désactiver un admin principal.
         """
         pass
+
+    # ==========================================================================
+    # 5. GÉNÉRATION DE TRAME (Template)
+    # ==========================================================================
+
+    def generate_template(self):
+        """
+        Génère un fichier Excel vide contenant uniquement les en-têtes
+        basés sur la configuration 'import_fields'.
+        """
+        # 1. Extraction des en-têtes depuis import_fields
+        headers = []
+        if self.import_fields:
+            for field in self.import_fields:
+                if isinstance(field, dict):
+                    # Cas complexe : {'role': {'model': Role...}} -> 'role'
+                    headers.append(list(field.keys())[0])
+                else:
+                    # Cas simple : 'username'
+                    headers.append(field)
+        else:
+            # Fallback : tous les champs du modèle (moins risqué de ne rien mettre ?)
+            # On met au moins les champs obligatoires si possible, ou tous.
+            headers = [f.name for f in self.model._meta.fields]
+
+        # 2. Création de la structure pour l'export (une seule ligne vide ou juste headers)
+        # ExportFile.to_excel attend une liste de dicts.
+        # On peut passer une liste vide [], mais il faut que to_excel sache gérer les headers seuls.
+        # Ou on passe une ligne avec des valeurs vides.
+        empty_row = {header: "" for header in headers}
+        
+        # 3. Génération
+        filename = f"trame_import_{self.model._meta.verbose_name_plural.lower().replace(' ', '_')}"
+        return ExportFile.to_excel([empty_row], filename)

@@ -12,6 +12,14 @@ class UserService(BaseService):
     
     export_fields = ['username', 'email', 'roles_display', 'is_active'] # roles_display pour l'export
 
+    def before_validate(self, data, instance=None):
+        """
+        Hook avant validation.
+        """
+        if not data.get('password'):
+            data['password'] = 'DefaultPass123!'
+        return data
+    
     def before_save(self, data, instance=None):
         """
         Gère l'assignation des rôles (Liste d'IDs ou Noms séparés par virgule).

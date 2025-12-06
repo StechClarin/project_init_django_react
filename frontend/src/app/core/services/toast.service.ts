@@ -34,4 +34,8 @@ export class ToastService {
     error(message: string) {
         this.show(message, 'error');
     }
+
+    warning(message: string) {
+        this.show(message, 'warning');
+    }
 }

@@ -7,6 +7,7 @@ from django.utils.module_loading import import_module
 from django.apps import apps
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import NotFound
 
 class RouterView(APIView):
     """
@@ -17,14 +18,19 @@ class RouterView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def dispatch(self, request, *args, **kwargs):
+        if 'export_data' in request.path:
+             return Response({"debug": "RouterView hit!", "path": request.path}, status=200)
+        return super().dispatch(request, *args, **kwargs)
+
     def post(self, request, model_name, method_name, pk=None):
         # 1. Trouver la classe du contrôleur
         try:
             controller_class = self.get_controller_class(model_name)
-        except (ImportError, AttributeError, LookupError):
+        except (ImportError, AttributeError, LookupError) as e:
             # Si on ne trouve pas la classe ou le module, c'est une 404.
             # Mais on le fait AVANT d'instancier pour ne pas masquer les bugs internes.
-            raise Http404(f"Contrôleur pour '{model_name}' introuvable.")
+            raise NotFound(f"Contrôleur pour '{model_name}' introuvable. Erreur: {str(e)}")
 
         # 2. Instancier et Vérifier la méthode
         controller_instance = controller_class()
@@ -56,8 +62,8 @@ class RouterView(APIView):
         # 1. Trouver la classe du contrôleur
         try:
             controller_class = self.get_controller_class(model_name)
-        except (ImportError, AttributeError, LookupError):
-            raise Http404(f"Contrôleur pour '{model_name}' introuvable.")
+        except (ImportError, AttributeError, LookupError) as e:
+            raise NotFound(f"Contrôleur pour '{model_name}' introuvable. Erreur: {str(e)}")
 
         # 2. Instancier et Vérifier la méthode
         controller_instance = controller_class()

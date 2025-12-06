@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -12,6 +13,12 @@ export abstract class BaseService {
     // Endpoint spécifique à définir par l'enfant (ex: 'user', 'product')
     abstract endpoint: string;
 
+    // Reactive Sync: Signal de rafraîchissement
+    private _refresh$ = new Subject<void>();
+    get refresh$() {
+        return this._refresh$.asObservable();
+    }
+
     protected get apiUrl(): string {
         return `${environment.apiUrl || 'http://127.0.0.1:8000/api'}/${this.endpoint}`;
     }
@@ -21,10 +28,11 @@ export abstract class BaseService {
      * POST /api/{endpoint}/save/
      */
     save(data: any): Observable<any> {
-        if (data.id) {
-            return this.http.post(`${this.apiUrl}/save/${data.id}/`, data);
-        }
-        return this.http.post(`${this.apiUrl}/save/`, data);
+        const request = data.id
+            ? this.http.post(`${this.apiUrl}/save/${data.id}/`, data)
+            : this.http.post(`${this.apiUrl}/save/`, data);
+
+        return request.pipe(tap(() => this._refresh$.next()));
     }
 
     /**
@@ -32,7 +40,9 @@ export abstract class BaseService {
      * DELETE /api/{endpoint}/delete/{id}/
      */
     delete(id: number | string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/delete/${id}/`, {});
+        return this.http.post(`${this.apiUrl}/delete/${id}/`, {}).pipe(
+            tap(() => this._refresh$.next())
+        );
     }
 
     /**
@@ -40,7 +50,9 @@ export abstract class BaseService {
      * POST /api/{endpoint}/status/{id}/
      */
     status(id: number | string): Observable<any> {
-        return this.http.post(`${this.apiUrl}/status/${id}/`, {});
+        return this.http.post(`${this.apiUrl}/status/${id}/`, {}).pipe(
+            tap(() => this._refresh$.next())
+        );
     }
 
     /**
@@ -51,7 +63,9 @@ export abstract class BaseService {
     import(file: File): Observable<any> {
         const formData = new FormData();
         formData.append('file', file);
-        return this.http.post(`${this.apiUrl}/import_data/`, formData);
+        return this.http.post(`${this.apiUrl}/import_data/`, formData).pipe(
+            tap(() => this._refresh$.next())
+        );
     }
 
     /**
@@ -60,7 +74,17 @@ export abstract class BaseService {
      * Downloads data as CSV or Excel file
      */
     export(format: 'csv' | 'excel' = 'excel'): Observable<Blob> {
-        return this.http.get(`${this.apiUrl}/export_data/?format=${format}`, {
+        return this.http.get(`${this.apiUrl}/export_data?format=${format}`, {
+            responseType: 'blob'
+        });
+    }
+
+    /**
+     * Download Import Template
+     * GET /api/{endpoint}/import_template/
+     */
+    downloadTemplate(): Observable<Blob> {
+        return this.http.get(`${this.apiUrl}/import_template/`, {
             responseType: 'blob'
         });
     }

@@ -182,14 +182,16 @@ export class UserListComponent extends BaseListComponent<User> implements OnInit
     input.click();
   }
 
+
+
   /**
-   * Gère l'export des utilisateurs vers un fichier CSV/Excel
+   * Télécharge le modèle d'import
    */
-  onExport() {
+  onDownloadTemplate() {
     this.handleFileOperation(
-      'export',
-      () => this.service.export('excel'), // ou 'csv' selon la préférence
-      'Export réussi. Téléchargement en cours...'
+      'export', // On réutilise la logique d'export (téléchargement)
+      () => this.service.downloadTemplate(),
+      'Modèle téléchargé avec succès.'
     );
   }
 
@@ -229,22 +231,15 @@ export class UserListComponent extends BaseListComponent<User> implements OnInit
       map(result => result.data.roles)
     );
 
-    // 1. Initialisation de la requête (QueryRef) via le parent
-    this.initQuery();
-
-    // 2. Abonnement aux changements (items$) - Surcharge pour le mapping spécifique si besoin
-    // Mais BaseListComponent le fait déjà bien. Si on veut juste le mapping standard:
-    // On peut laisser initQuery faire son travail.
-    // Cependant, UserListComponent avait un mapping spécifique pour isLoading.set(false)
-    // BaseListComponent le fait aussi maintenant.
-
-    // 3. Restauration des filtres depuis le Store
+    // 1. Restauration des filtres depuis le Store (AVANT d'initialiser la query)
     this.store.select(selectUserFilters).pipe(take(1)).subscribe(filters => {
       if (filters && Object.keys(filters).length > 0) {
-        console.log("⚡ Filtres restaurés, rechargement...", filters);
+        console.log("⚡ Filtres restaurés:", filters);
         this.filterForm.patchValue(filters, { emitEvent: false });
-        this.refresh();
       }
+
+      // 2. Initialisation de la requête (QueryRef) une fois les filtres appliqués
+      this.initQuery();
     });
 
     // 4. Synchro Search Input -> Store
@@ -286,5 +281,31 @@ export class UserListComponent extends BaseListComponent<User> implements OnInit
   override refresh() {
     this.store.dispatch(UserActions.setFilters({ filters: this.filterForm.value }));
     super.refresh();
+  }
+
+  // Configuration de l'export PDF
+  protected override getExportConfig() {
+    return {
+      title: 'Liste des Utilisateurs',
+      columns: [
+        { header: 'Utilisateur', key: 'username' },
+        { header: 'Email', key: 'email' },
+        {
+          header: 'Rôle',
+          key: 'roles',
+          format: (roles: any[]) => roles && roles.length > 0 ? roles.map(r => r.name).join(', ') : 'Aucun'
+        },
+        {
+          header: 'Statut',
+          key: 'isActive',
+          format: (isActive: boolean) => isActive ? 'Actif' : 'Inactif'
+        },
+        {
+          header: 'Date d\'inscription',
+          key: 'dateJoined',
+          format: (date: string) => new Date(date).toLocaleDateString('fr-FR')
+        }
+      ]
+    };
   }
 }

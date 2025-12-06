@@ -191,3 +191,19 @@ class BaseController(APIView):
             )
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def import_template(self, request, *args, **kwargs):
+        """
+        Télécharge un modèle d'import (Excel)
+        GET /api/{endpoint}/import_template/
+        """
+        try:
+            # On utilise la méthode d'export mais avec une limite de 0 pour n'avoir que les en-têtes
+            # Ou une méthode spécifique si le service l'implémente
+            if hasattr(self.service, 'generate_template'):
+                return self.service.generate_template()
+            
+            # Fallback: Export vide
+            return self.service.export_data('excel', empty_template=True)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

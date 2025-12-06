@@ -28,4 +28,5 @@ urlpatterns = [
     # --- CORRECTION : On utilise GraphQLController ---
     # Il gère la sécurité JWT et désactive le CSRF automatiquement
     re_path(r'^graphql.*', GraphQLController.as_view(graphiql=True)),
+    # Force reload
 ]

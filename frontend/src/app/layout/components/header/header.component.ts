@@ -96,22 +96,31 @@ interface Page {
         </button>
 
         <!-- Profile Dropdown Trigger -->
-        <div class="flex items-center gap-3 cursor-pointer group p-1.5 pr-3 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200/50">
-          <div class="relative">
-             <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-white group-hover:ring-indigo-100 transition-all">
-               <img src="https://ui-avatars.com/api/?name=Ether+Nanos&background=6366f1&color=fff" alt="Profile" class="rounded-full h-full w-full object-cover">
-             </div>
-             <div class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></div>
-          </div>
-          
-          <div class="hidden sm:block text-left">
-            <p class="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-              EtherNanos
-            </p>
-            <p class="text-xs text-gray-500 font-medium">Super Admin</p>
+        <div class="relative" (click)="isProfileOpen = !isProfileOpen" (mouseleave)="isProfileOpen = false">
+          <div class="flex items-center gap-3 cursor-pointer group p-1.5 pr-3 rounded-xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-200/50">
+            <div class="relative">
+               <div class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md ring-2 ring-white group-hover:ring-indigo-100 transition-all">
+                 <img src="https://ui-avatars.com/api/?name=Ether+Nanos&background=6366f1&color=fff" alt="Profile" class="rounded-full h-full w-full object-cover">
+               </div>
+               <div class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></div>
+            </div>
+            
+            <div class="hidden sm:block text-left">
+              <p class="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                EtherNanos
+              </p>
+              <p class="text-xs text-gray-500 font-medium">Super Admin</p>
+            </div>
+  
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
           </div>
 
-          <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          <!-- Dropdown Menu -->
+          <div *ngIf="isProfileOpen" 
+               class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600">Mon Profil</a>
+            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600">Paramètres</a>
+          </div>
         </div>
 
         <!-- Logout Button -->
@@ -134,6 +143,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   searchControl = new FormControl('');
   filteredPages$!: Observable<Page[]>;
   showResults = false;
+  isProfileOpen = false;
   private destroy$ = new Subject<void>();
 
   ngOnInit() {
